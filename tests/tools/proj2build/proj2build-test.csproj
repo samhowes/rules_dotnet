@@ -1,0 +1,43 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<RootNamespace>proj2build_test</RootNamespace>
+
+		<IsPackable>false</IsPackable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Compile Remove="testdata\**" />
+		<EmbeddedResource Remove="testdata\**" />
+		<None Remove="testdata\**" />
+    <Content Include="testdata\**">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Remove="test.txt" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="test.txt">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.0.1" />
+		<PackageReference Include="Moq" Version="4.16.0" />
+		<PackageReference Include="xunit" Version="2.4.0" />
+		<PackageReference Include="xunit.runner.visualstudio" Version="2.4.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\..\tools\proj2build\proj2build.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="testdata\" />
+	</ItemGroup>
+</Project>

@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "proj2build": {
+      "commandName": "Project",
+      "commandLineArgs": "proj2build.sln /**/*test**",
+      "workingDirectory": "C:\\Users\\sam\\dev\\rules_dotnet\\tools\\proj2build"
+    }
+  }
+}

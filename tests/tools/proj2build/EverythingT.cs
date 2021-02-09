@@ -26,23 +26,26 @@ namespace proj2build_test
 
             var creator = new WorkspaceCreator(writer.Object, new VariableSubstitutor());
             creator.CreateFromSolutionFile(SolutionPath);
+            var solutionDirectory = Path.GetDirectoryName(SolutionPath);
 
-            var workspacePath = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(SolutionPath)!, "WORKSPACE"));
+            AssertFile(Path.Combine(solutionDirectory!, "WORKSPACE"), written);
+            AssertFile(Path.Combine(solutionDirectory!, "ConsoleApp", "BUILD"), written);
+        }
+
+        private static void AssertFile(string path, Dictionary<string, string> written)
+        {
+            var workspacePath = Path.GetFullPath(path);
 
             Assert.Contains(workspacePath, written.Keys);
             var got = written[workspacePath];
             var want = File.ReadAllText(workspacePath + ".want");
 
-            DiffAsserter.AssertSame(want, got, "WORKSPACE");
+            DiffAsserter.AssertSame(want, got, path);
         }
     }
 
     public class DiffAsserter
     {
-        public static void AssertSame()
-        {
-        }
-
         public static void AssertSame(string want, string got, string context)
         {
             var wantLines = want.Split(Environment.NewLine);
@@ -52,7 +55,11 @@ namespace proj2build_test
 
             for (var i = 0; i < loopCount; i++)
             {
-                Assert.True(wantLines[i] == gotLines[i], $"[{context}] Difference at line #{i + 1}\nExpected '{wantLines[i]}'\nActual '{gotLines[i]}'");
+                Assert.True(wantLines[i] == gotLines[i],
+                    $"[{context}]\n" +
+                    $"Difference at line #{i + 1}\n" +
+                    $"Expected '{wantLines[i]}'\n" +
+                    $"Actual   '{gotLines[i]}'");
             }
         }
     }

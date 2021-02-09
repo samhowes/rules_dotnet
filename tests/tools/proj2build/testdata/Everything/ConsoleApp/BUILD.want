@@ -1,0 +1,7 @@
+load("@io_bazel_rules_dotnet//dotnet:defs.bzl", "core_binary")
+
+core_binary(
+    name = "ConsoleApp.exe",
+    srcs = glob(["**/*.cs"]),
+    deps = ["@io_bazel_rules_dotnet//dotnet/stdlib.core:libraryset"],
+)

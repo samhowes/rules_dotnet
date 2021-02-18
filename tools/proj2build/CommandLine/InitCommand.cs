@@ -4,6 +4,7 @@ using Microsoft.Build.Evaluation;
 using Microsoft.Build.Definition;
 using Microsoft.Extensions.FileSystemGlobbing;
 using System.Linq;
+using proj2build.Bazel;
 
 namespace proj2build
 {

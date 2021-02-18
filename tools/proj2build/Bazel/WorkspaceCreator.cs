@@ -1,62 +1,24 @@
 ﻿#nullable enable
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Microsoft.Build.Construction;
 using Microsoft.Build.Definition;
 using Microsoft.Build.Evaluation;
 
 // ReSharper disable StringLiteralTypo
 
-namespace proj2build
+namespace proj2build.Bazel
 {
-    public class BuildCreator
+    public static class NamespacePathResolver
     {
-        public HashSet<string> Loads { get; set; } = new HashSet<string>();
-
-        public void AddBinary(string name)
+        public static string Resolve<T>(string path)
         {
-            Loads.Add("core_binary");
-            var target = new Target() { Name = name + ".exe" };
-            target.Attributes.Add(new StringAttribute("name", target.Name));
-            target.Attributes.Add(new GlobAttribute("srcs", "**/*.cs"));
-            target.Deps.Add("@io_bazel_rules_dotnet//dotnet/stdlib.core:libraryset");
-            target.Rule = "core_binary";
-            Targets.Add(target);
-        }
-
-        public List<Target> Targets { get; } = new List<Target>();
-
-        public string Build()
-        {
-            var builder = new IndentedStringBuilder();
-            builder.Append("load(\"@io_bazel_rules_dotnet//dotnet:defs.bzl\", \"");
-            builder.AppendJoin("\", \"", Loads);
-            builder.AppendLine("\")");
-
-            foreach (var target in Targets)
-            {
-                target.Build();
-                builder.AppendLine();
-                builder.Append(target.Rule);
-                builder.AppendLine("(");
-                using (var _ = builder.Indent())
-                {
-                    foreach (var attribute in target.Attributes)
-                    {
-                        builder.Append(attribute.Name);
-                        builder.Append(" = ");
-                        attribute.WriteValue(builder);
-                        builder.AppendLine(",");
-                    }
-                }
-                builder.AppendLine(")");
-                builder.AppendLine();
-            }
-
-            return builder.ToString()!;
+            var nsParts = typeof(T).Namespace!.Split('.').Skip(1).Append(path).ToArray();
+            var assetPath = Path.Combine(nsParts);
+            return assetPath;
         }
     }
 
@@ -78,7 +40,7 @@ namespace proj2build
             var directoryPath = Path.GetDirectoryName(fullPath);
             var solutionFile = SolutionFile.Parse(fullPath);
             var solutionName = Path.GetFileNameWithoutExtension(path);
-            var template = File.ReadAllText(WorkspaceTemplatePath);
+            var template = File.ReadAllText(NamespacePathResolver.Resolve<WorkspaceCreator>(WorkspaceTemplatePath));
 
             var contents = _substitutor.Substitute(template,
                 new Dictionary<string, string>() { { "workspace.name", solutionName.ToLower() } });
@@ -95,7 +57,16 @@ namespace proj2build
             {
                 var project = Project.FromFile(projectInSolution.AbsolutePath, options);
                 var buildCreator = new BuildCreator();
-                buildCreator.AddBinary(Path.GetFileNameWithoutExtension(project.FullPath));
+
+                var targetName = Path.GetFileNameWithoutExtension(project.FullPath);
+
+                var outputType = project.GetPropertyValue("OutputType");
+                Target target;
+                target = String.Equals(outputType, "exe", StringComparison.OrdinalIgnoreCase)
+                    ? buildCreator.AddBinary(targetName)
+                    : buildCreator.AddLibrary(targetName);
+
+                target.TargetFramework = project.GetPropertyValue("TargetFramework");
 
                 var buildPath = Path.Combine(project.DirectoryPath, "BUILD");
                 var buildContents = buildCreator.Build();

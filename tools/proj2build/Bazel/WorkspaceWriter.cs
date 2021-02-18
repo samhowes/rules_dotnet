@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace proj2build
+namespace proj2build.Bazel
 {
     public class WorkspaceWriter
     {

@@ -1,7 +1,9 @@
-load("@io_bazel_rules_dotnet//dotnet:defs.bzl", "core_binary")
+load("@io_bazel_rules_dotnet//dotnet:defs.bzl", "csharp_binary")
 
-core_binary(
+csharp_binary(
     name = "ConsoleApp.exe",
     srcs = glob(["**/*.cs"]),
+    target_framework = "netcoreapp3.1",
+    visibility = ["//visibility:public"],
     deps = ["@io_bazel_rules_dotnet//dotnet/stdlib.core:libraryset"],
 )

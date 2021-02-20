@@ -1,11 +1,15 @@
 load("@io_bazel_rules_dotnet//dotnet:defs.bzl", "csharp_binary")
 
 csharp_binary(
-    name = "ConsoleApp.exe",
+    name = "WebApplication.Api.exe",
     srcs = glob(["**/*.cs"]),
+    data = [
+        ":appsettings.json",
+    ] + glob(["appsettings.*.json"]),
     target_framework = "netcoreapp3.1",
     visibility = ["//visibility:public"],
     deps = [
         "@core_sdk_stdlib//:libraryset",
+        "@core_sdk_stdlib//:Microsoft.AspNetCore.App",
     ],
 )

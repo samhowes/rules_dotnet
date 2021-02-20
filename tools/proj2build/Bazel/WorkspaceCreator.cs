@@ -45,7 +45,7 @@ namespace proj2build.Bazel
             var contents = _substitutor.Substitute(template,
                 new Dictionary<string, string>() { { "workspace.name", solutionName.ToLower() } });
 
-            _writer.Write(Path.Combine(directoryPath, "WORKSPACE"), contents);
+            _writer.Write(Path.Combine(directoryPath!, "WORKSPACE"), contents);
 
             var collection = new ProjectCollection();
             var options = new ProjectOptions()
@@ -61,12 +61,28 @@ namespace proj2build.Bazel
                 var targetName = Path.GetFileNameWithoutExtension(project.FullPath);
 
                 var outputType = project.GetPropertyValue("OutputType");
-                Target target;
-                target = String.Equals(outputType, "exe", StringComparison.OrdinalIgnoreCase)
-                    ? buildCreator.AddBinary(targetName)
-                    : buildCreator.AddLibrary(targetName);
+                var target = buildCreator.AddTarget(targetName);
 
-                target.TargetFramework = project.GetPropertyValue("TargetFramework");
+                target.SetTargetFramework(project.GetPropertyValue("TargetFramework"));
+                target.Executable = target.Executable ||
+                                    string.Equals(outputType, "exe", StringComparison.OrdinalIgnoreCase);
+
+                if (File.Exists(Path.Combine(project.DirectoryPath, "appsettings.json")))
+                {
+                    target.Data = new AdditionAttribute("data",
+                        new ListAttribute("data", true, new List<string>() { ":appsettings.json" }),
+                        new GlobAttribute("data", "appsettings.*.json")
+                    );
+                }
+
+                if (project.Xml.Sdk != null)
+                {
+                    if (!target.AddSdk(project.Xml.Sdk))
+                    {
+                        buildCreator.AddTranslationError(project.Xml.SdkLocation,
+                            $"Failed to add unkown sdk specifed in Project.Sdk: '{project.Xml.Sdk}'.");
+                    }
+                }
 
                 var buildPath = Path.Combine(project.DirectoryPath, "BUILD");
                 var buildContents = buildCreator.Build();

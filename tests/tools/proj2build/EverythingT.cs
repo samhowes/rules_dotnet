@@ -13,8 +13,11 @@ namespace proj2build_test
     {
         private static string SolutionPath = Path.Combine("testdata", "Everything", "Everything.sln");
 
-        [Fact]
-        public void EverythingTest()
+        [Theory]
+        [InlineData("ConsoleApp")]
+        [InlineData("ClassLibrary")]
+        [InlineData("WebApplication.Api")]
+        public void EverythingTest(string directory)
         {
             var written = new Dictionary<string, string>();
             var writer = new Mock<WorkspaceWriter>();
@@ -28,9 +31,7 @@ namespace proj2build_test
             creator.CreateFromSolutionFile(SolutionPath);
             var solutionDirectory = Path.GetDirectoryName(SolutionPath);
 
-            DiffAsserter.AssertFile(Path.Combine(solutionDirectory!, "WORKSPACE"), written);
-            DiffAsserter.AssertFile(Path.Combine(solutionDirectory!, "ConsoleApp", "BUILD"), written);
-            DiffAsserter.AssertFile(Path.Combine(solutionDirectory!, "ClassLibrary", "BUILD"), written);
+            DiffAsserter.AssertFile(Path.Combine(solutionDirectory!, directory, "BUILD"), written);
         }
     }
 }

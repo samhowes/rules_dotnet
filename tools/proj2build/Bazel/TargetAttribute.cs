@@ -12,23 +12,25 @@ namespace proj2build.Bazel
             Name = name;
         }
 
-        public abstract void WriteValue(IndentedStringBuilder builder);
+        public abstract void WriteValue(StarlarkStringBuilder builder);
     }
 
     public class ListAttribute : TargetAttribute
     {
+        private readonly bool _expand;
         private readonly List<string> _value;
 
-        public ListAttribute(string name, List<string> value) : base(name)
+        public ListAttribute(string name, bool expand, List<string> value) : base(name)
         {
+            _expand = expand;
             _value = value;
         }
 
-        public override void WriteValue(IndentedStringBuilder builder)
+        public override void WriteValue(StarlarkStringBuilder builder)
         {
             builder.Append("[");
             IDisposable indent = null;
-            if (_value.Count > 1)
+            if (_value.Count > 1 || _expand)
             {
                 builder.AppendLine();
                 indent = builder.Indent();
@@ -37,7 +39,7 @@ namespace proj2build.Bazel
             foreach (var value in _value)
             {
                 builder.AppendQuoted(value);
-                if (_value.Count > 1) builder.AppendLine(",");
+                if (_value.Count > 1 || _expand) builder.AppendLine(",");
             }
 
             indent?.Dispose();
@@ -54,7 +56,7 @@ namespace proj2build.Bazel
             Value = value;
         }
 
-        public override void WriteValue(IndentedStringBuilder builder)
+        public override void WriteValue(StarlarkStringBuilder builder)
         {
             builder.Append("\"");
             builder.Append(Value);
@@ -71,11 +73,33 @@ namespace proj2build.Bazel
             Glob = glob;
         }
 
-        public override void WriteValue(IndentedStringBuilder builder)
+        public override void WriteValue(StarlarkStringBuilder builder)
         {
             builder.Append("glob([");
             builder.AppendQuoted(Glob);
             builder.Append("])");
+        }
+    }
+
+    public class AdditionAttribute : TargetAttribute
+    {
+        public TargetAttribute[] Operands { get; }
+
+        public AdditionAttribute(string name, params TargetAttribute[] operands) : base(name)
+        {
+            Operands = operands;
+        }
+
+        public override void WriteValue(StarlarkStringBuilder builder)
+        {
+            for (int i = 0; i < Operands.Length; i++)
+            {
+                if (i > 0)
+                {
+                    builder.Append(" + ");
+                }
+                Operands[i].WriteValue(builder);
+            }
         }
     }
 }
